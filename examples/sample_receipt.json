@@ -1,0 +1,12 @@
+{
+  "document_id": "REC-2026-0042",
+  "date": "2026-05-15",
+  "vendor": "AWS India Cloud Services",
+  "amount_total_inr": 11800.0,
+  "gst_paid_inr": 1800.0,
+  "gst_rate_percent": 18,
+  "description": "Monthly subscription charges for server hosting.",
+  "category": "Software SaaS",
+  "usage_type": "Pure Business",
+  "payment_mode": "Digital (UPI/Card/NetBanking)"
+}

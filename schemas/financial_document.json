@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FinancialDocumentItem",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Unique identifier of the source file or invoice entry."
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of transaction (YYYY-MM-DD)."
+    },
+    "vendor": {
+      "type": "string",
+      "description": "Name of the merchant or seller."
+    },
+    "amount_total_inr": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total gross amount paid including taxes."
+    },
+    "gst_paid_inr": {
+      "type": "number",
+      "minimum": 0,
+      "description": "GST component paid (if present on invoice)."
+    },
+    "gst_rate_percent": {
+      "type": "number",
+      "enum": [0, 5, 12, 18, 28],
+      "description": "GST percentage rate."
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of items or services purchased."
+    },
+    "category": {
+      "type": "string",
+      "description": "Business expense category (e.g., Office Supplies, Software SaaS, Rent, Personal)."
+    },
+    "usage_type": {
+      "type": "string",
+      "enum": ["Pure Business", "Pure Personal", "Mixed", "Unresolved"],
+      "description": "Intended usage category."
+    },
+    "payment_mode": {
+      "type": "string",
+      "enum": ["Digital (UPI/Card/NetBanking)", "Cash", "Cheque"],
+      "description": "Mode of payment, critical for Sec 44AD calculations."
+    }
+  },
+  "required": ["document_id", "date", "vendor", "amount_total_inr", "description", "usage_type", "payment_mode"],
+  "additionalProperties": false
+}

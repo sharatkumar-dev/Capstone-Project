@@ -1,0 +1,9 @@
+{
+  "taxpayer_name": "Aditya Sharma",
+  "assessment_year": "2026-27",
+  "track": "Professional",
+  "gross_revenue_inr": 4500000,
+  "gst_registered": true,
+  "gstin": "27AAAAA1111A1Z1",
+  "preferred_regime": "New Regime (Default Sec 115BAC)"
+}
