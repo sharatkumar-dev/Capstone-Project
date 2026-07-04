@@ -25,7 +25,7 @@ class ExtractedInvoiceFields(BaseModel):
 
 def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> ExtractedInvoiceItem:
     """
-    Ingests file bytes, converts PDFs to images if necessary, and uses gemini-2.5-flash vision
+    Ingests file bytes, converts PDFs to images if necessary, and uses gemini-2.5-flash-lite vision
     capabilities to extract invoice details matching the ExtractedInvoiceItem schema.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -70,7 +70,7 @@ def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> Extra
     try:
         logger.info("Calling Gemini Vision model for document: %s", file_name)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             contents=[
                 "Extract the receipt/invoice details from this document.",
                 img

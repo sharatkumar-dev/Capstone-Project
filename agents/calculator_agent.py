@@ -142,7 +142,7 @@ def run_calculation(profile: dict, transactions: list) -> str:
     try:
         logger.info("Calling Gemini model for Calculator Agent report writer...")
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             contents=[
                 "Write a professional tax compliance advisory report in Markdown format using the following details.",
                 prompt_data
