@@ -5,7 +5,7 @@ from typing import Optional, Literal
 import datetime
 from pydantic import BaseModel, Field
 from PIL import Image
-from pdf2image import convert_from_bytes
+import fitz
 from google import genai
 from google.genai import types
 from schemas.models import ExtractedInvoiceItem
@@ -25,7 +25,7 @@ class ExtractedInvoiceFields(BaseModel):
 
 def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> ExtractedInvoiceItem:
     """
-    Ingests file bytes, converts PDFs to images if necessary, and uses gemini-2.0-flash vision
+    Ingests file bytes, converts PDFs to images if necessary, and uses gemini-2.5-flash vision
     capabilities to extract invoice details matching the ExtractedInvoiceItem schema.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -37,20 +37,18 @@ def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> Extra
     # 1. Process document into PIL Image
     try:
         if mime_type.lower() == "application/pdf" or file_name.lower().endswith(".pdf"):
-            logger.info("PDF document detected. Converting first page to PIL Image...")
+            logger.info("PDF document detected. Converting first page to PIL Image using PyMuPDF...")
             try:
-                images = convert_from_bytes(file_bytes, first_page=1, last_page=1)
-                if not images:
-                    raise ValueError("PDF rendering returned no images.")
-                img = images[0]
+                doc = fitz.open(stream=file_bytes, filetype="pdf")
+                if len(doc) == 0:
+                    raise ValueError("PDF document has no pages.")
+                page = doc.load_page(0) # Get first page
+                pix = page.get_pixmap()
+                img_data = pix.tobytes("png")
+                img = Image.open(io.BytesIO(img_data))
             except Exception as pdf_err:
-                logger.exception("pdf2image conversion failed: %s", str(pdf_err))
-                if "poppler" in str(pdf_err).lower() or "pdfinfo" in str(pdf_err).lower():
-                    raise RuntimeError(
-                        "System dependency 'poppler' is missing. Please ensure poppler-utils is installed. "
-                        "On Linux: apt-get install poppler-utils. On macOS: brew install poppler."
-                    ) from pdf_err
-                raise
+                logger.exception("PyMuPDF PDF conversion failed: %s", str(pdf_err))
+                raise ValueError(f"Could not render PDF using PyMuPDF: {str(pdf_err)}") from pdf_err
         else:
             logger.info("Image document detected. Loading PIL Image...")
             img = Image.open(io.BytesIO(file_bytes))
@@ -70,9 +68,9 @@ def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> Extra
 
     # 3. Call Gemini Multimodal API
     try:
-        logger.info("Calling Gemini 2.0 Vision model for document: %s", file_name)
+        logger.info("Calling Gemini Vision model for document: %s", file_name)
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[
                 "Extract the receipt/invoice details from this document.",
                 img
