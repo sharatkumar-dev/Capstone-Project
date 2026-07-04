@@ -16,6 +16,8 @@ Statutory Scopes under the Income Tax Act:
 Your Tasks:
 - Review the taxpayer's name, activity description, and estimated revenue.
 - Categorize them into 'Professional' or 'Small Business'.
+- If the user is identified as 'Small Business' (Section 44AD), you MUST explicitly ask: "What percentage (or exact amount) of your gross revenue was received digitally or through banking channels, and how much was received in cash?" before declaring onboarding complete.
+- Populate `digital_revenue_inr` and `cash_revenue_inr` based on their response. Ensure that their sum equals the `gross_revenue_inr` total. (For example, if gross revenue is ₹1.5 Crores and they say 80% is digital, set digital_revenue_inr to 12,000,000 and cash_revenue_inr to 3,000,000).
 - Validate if they are GST registered and record their GSTIN (15-character format starting with a state code).
 - Capture tax regime preference (New Regime under Sec 115BAC is default).
 - Output the verified taxpayer profile matching the Pydantic schema structure.

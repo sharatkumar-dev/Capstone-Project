@@ -15,6 +15,8 @@ class PartialTaxpayerProfile(BaseModel):
     gst_registered: Optional[bool] = Field(None, description="Whether the taxpayer is registered under GST.")
     gstin: Optional[str] = Field(None, description="Indian GSTIN (15 characters), required if registered.")
     preferred_regime: Optional[Literal["Old Regime", "New Regime (Default Sec 115BAC)"]] = Field("New Regime (Default Sec 115BAC)", description="Tax regime choice.")
+    digital_revenue_inr: Optional[float] = Field(None, description="Amount of gross revenue received digitally or via banking channels (INR).")
+    cash_revenue_inr: Optional[float] = Field(None, description="Amount of gross revenue received in cash (INR).")
 
 class RouterResponse(BaseModel):
     assistant_response: str = Field(..., description="Friendly response to the taxpayer. Keep the conversation engaging and ask for missing details.")

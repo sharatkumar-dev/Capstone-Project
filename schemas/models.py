@@ -13,6 +13,8 @@ class TaxpayerProfile(BaseModel):
     gst_registered: bool = Field(..., description="GST registration status of the taxpayer.")
     gstin: Optional[str] = Field(None, pattern=r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$", description="Indian GSTIN (15 characters), required if registered.")
     preferred_regime: Literal["Old Regime", "New Regime (Default Sec 115BAC)"] = Field("New Regime (Default Sec 115BAC)", description="Tax regime choice.")
+    digital_revenue_inr: Optional[float] = Field(None, description="Amount of gross revenue received digitally or via banking channels (INR).")
+    cash_revenue_inr: Optional[float] = Field(None, description="Amount of gross revenue received in cash (INR).")
 
 class ExtractedInvoiceItem(BaseModel):
     """

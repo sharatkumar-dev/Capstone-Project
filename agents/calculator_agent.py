@@ -70,24 +70,27 @@ def run_calculation(profile: dict, transactions: list) -> str:
         if track == "Professional":
             presumptive_income = gross_revenue * 0.50
         else:
-            # Section 44AD Small Business digital/cash ratio
-            # Digital = UPI, Card, NetBanking, Cheque. Cash = Cash.
-            digital_txns = [t for t in transactions if t.get("payment_mode") in ["Digital (UPI/Card/NetBanking)", "Cheque"]]
-            cash_txns = [t for t in transactions if t.get("payment_mode") == "Cash"]
+            # Use onboarding-defined digital/cash revenue split
+            digital_turnover = float(profile.get("digital_revenue_inr") or 0.0)
+            cash_turnover = float(profile.get("cash_revenue_inr") or 0.0)
             
-            digital_sum = sum(t.get("amount_total_inr", 0.0) for t in digital_txns)
-            cash_sum = sum(t.get("amount_total_inr", 0.0) for t in cash_txns)
-            total_sum = digital_sum + cash_sum
-            
-            if total_sum > 0:
-                digital_ratio = digital_sum / total_sum
-                cash_ratio = cash_sum / total_sum
-            else:
-                digital_ratio = 1.0  # Default to digital if no transactions
-                cash_ratio = 0.0
+            # Fallback if both are zero
+            if digital_turnover == 0.0 and cash_turnover == 0.0:
+                logger.info("Onboarding split not found or zero; using transaction-based ratio fallback.")
+                digital_txns = [t for t in transactions if t.get("payment_mode") in ["Digital (UPI/Card/NetBanking)", "Cheque"]]
+                cash_txns = [t for t in transactions if t.get("payment_mode") == "Cash"]
                 
-            digital_turnover = gross_revenue * digital_ratio
-            cash_turnover = gross_revenue * cash_ratio
+                digital_sum = sum(t.get("amount_total_inr", 0.0) for t in digital_txns)
+                cash_sum = sum(t.get("amount_total_inr", 0.0) for t in cash_txns)
+                total_sum = digital_sum + cash_sum
+                
+                if total_sum > 0:
+                    digital_ratio = digital_sum / total_sum
+                else:
+                    digital_ratio = 1.0
+                
+                digital_turnover = gross_revenue * digital_ratio
+                cash_turnover = gross_revenue * (1.0 - digital_ratio)
             
             presumptive_income = (digital_turnover * 0.06) + (cash_turnover * 0.08)
 
@@ -151,15 +154,18 @@ def run_calculation(profile: dict, transactions: list) -> str:
         )
         report_content = response.text
         
-        # 7. Write to local directory
+        # 7. Write to local directory (both reports folder and local root directory)
         reports_dir = os.path.join(base_dir, "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        report_path = os.path.join(reports_dir, "Tax_Compliance_Report_FY2026.md")
-        
-        with open(report_path, "w", encoding="utf-8") as rf:
+        report_path_reports = os.path.join(reports_dir, "Tax_Compliance_Report_FY2026.md")
+        with open(report_path_reports, "w", encoding="utf-8") as rf:
             rf.write(report_content)
             
-        logger.info("Successfully generated and saved compliance report to: %s", report_path)
+        report_path_root = os.path.join(base_dir, "Tax_Compliance_Report_FY2026.md")
+        with open(report_path_root, "w", encoding="utf-8") as rf:
+            rf.write(report_content)
+            
+        logger.info("Successfully generated and saved compliance report to: %s and %s", report_path_reports, report_path_root)
         return report_content
 
     except Exception as api_err:

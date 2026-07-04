@@ -353,6 +353,9 @@ with col_main:
                     if is_complete and st.session_state.temp_profile.get("gst_registered") is True:
                         if st.session_state.temp_profile.get("gstin") is None:
                             is_complete = False
+                    if is_complete and st.session_state.temp_profile.get("track") == "Small Business":
+                        if st.session_state.temp_profile.get("digital_revenue_inr") is None or st.session_state.temp_profile.get("cash_revenue_inr") is None:
+                            is_complete = False
                             
                     if is_complete:
                         try:
@@ -452,7 +455,7 @@ with col_sidebar_right:
         
         # Download button
         st.download_button(
-            label="📥 Download Compliance Report (.md)",
+            label="📥 Download Official Tax Compliance Report (.md)",
             data=st.session_state.calculation_result,
             file_name="Tax_Compliance_Report_FY2026.md",
             mime="text/markdown",
