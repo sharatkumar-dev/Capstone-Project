@@ -16,6 +16,8 @@ env/
 .vscode/
 .agents/
 .antigravity/
+*chat_history.md
+readable_chat_history.md
 
 # Data and Reports (keep structure but ignore outputs)
 data/*
