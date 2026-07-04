@@ -132,14 +132,14 @@ def run_calculation(profile: dict, transactions: list) -> str:
         logger.exception("Failed to load calculator agent system instruction: %s", str(e))
         system_instruction = "You are the Calculator Agent. Summarize tax presumptive calculations and flags into a clean compliance report."
 
-    # 6. Call Gemini 2.0 to draft the Markdown report
+    # 6. Call Gemini to draft the Markdown report
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
     
     try:
-        logger.info("Calling Gemini 2.0 model for Calculator Agent report writer...")
+        logger.info("Calling Gemini model for Calculator Agent report writer...")
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[
                 "Write a professional tax compliance advisory report in Markdown format using the following details.",
                 prompt_data

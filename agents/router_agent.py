@@ -22,7 +22,7 @@ class RouterResponse(BaseModel):
 
 def run_router_agent(messages: list) -> RouterResponse:
     """
-    Invokes the Router Agent using gemini-2.0-flash with the conversation history.
+    Invokes the Router Agent using gemini-2.5-flash with the conversation history.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -57,7 +57,7 @@ def run_router_agent(messages: list) -> RouterResponse:
     try:
         logger.info("Calling Gemini model for Router Agent...")
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,

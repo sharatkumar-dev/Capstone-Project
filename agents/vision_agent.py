@@ -17,7 +17,7 @@ class ExtractedInvoiceFields(BaseModel):
     vendor: str = Field(..., description="Vendor/Merchant name.")
     amount_total_inr: float = Field(..., ge=0.0, description="Total invoice amount in INR including taxes.")
     gst_paid_inr: float = Field(0.0, ge=0.0, description="GST component paid (CGST+SGST or IGST) if present.")
-    gst_rate_percent: Literal[0, 5, 12, 18, 28] = Field(0, description="GST percentage rate.")
+    gst_rate_percent: Literal["0", "5", "12", "18", "28"] = Field("0", description="GST percentage rate.")
     description: str = Field(..., description="Description of the goods or services purchased.")
     category: str = Field(..., description="Expense category classification (e.g. software SaaS, office supplies, rent, personal).")
     usage_type: Literal["Pure Business", "Pure Personal", "Mixed", "Unresolved"] = Field("Unresolved", description="Indicates usage scope based on nature of goods.")
@@ -100,7 +100,7 @@ def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> Extra
             vendor=fields.vendor,
             amount_total_inr=fields.amount_total_inr,
             gst_paid_inr=fields.gst_paid_inr,
-            gst_rate_percent=fields.gst_rate_percent,
+            gst_rate_percent=int(fields.gst_rate_percent),
             description=fields.description,
             category=fields.category,
             usage_type=fields.usage_type,
