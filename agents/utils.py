@@ -192,5 +192,5 @@ def convert_markdown_to_pdf(markdown_text: str) -> bytes:
             pdf.ln(7)
             
     # Output bytes
-    return pdf.output()
+    return bytes(pdf.output())
 
