@@ -160,6 +160,8 @@ def run_calculation(profile: dict, transactions: list) -> str:
         # 7. Write to local directory (both reports folder and local root directory)
         reports_dir = os.path.join(base_dir, "reports")
         os.makedirs(reports_dir, exist_ok=True)
+        
+        # Save Markdown versions
         report_path_reports = os.path.join(reports_dir, "Tax_Compliance_Report_FY2026.md")
         with open(report_path_reports, "w", encoding="utf-8") as rf:
             rf.write(report_content)
@@ -167,6 +169,23 @@ def run_calculation(profile: dict, transactions: list) -> str:
         report_path_root = os.path.join(base_dir, "Tax_Compliance_Report_FY2026.md")
         with open(report_path_root, "w", encoding="utf-8") as rf:
             rf.write(report_content)
+            
+        # Save PDF versions
+        try:
+            from agents.utils import convert_markdown_to_pdf
+            pdf_bytes = convert_markdown_to_pdf(report_content)
+            
+            pdf_path_reports = os.path.join(reports_dir, "Tax_Compliance_Report_FY2026.pdf")
+            with open(pdf_path_reports, "wb") as pf:
+                pf.write(pdf_bytes)
+                
+            pdf_path_root = os.path.join(base_dir, "Tax_Compliance_Report_FY2026.pdf")
+            with open(pdf_path_root, "wb") as pf:
+                pf.write(pdf_bytes)
+                
+            logger.info("Successfully generated and saved compliance report PDF to: %s and %s", pdf_path_reports, pdf_path_root)
+        except Exception as pdf_err:
+            logger.exception("Failed to generate PDF version of the report: %s", str(pdf_err))
             
         logger.info("Successfully generated and saved compliance report to: %s and %s", report_path_reports, report_path_root)
         return report_content

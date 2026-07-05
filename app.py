@@ -453,14 +453,31 @@ with col_sidebar_right:
     if st.session_state.calculation_result:
         st.success("Analysis report generated successfully!")
         
-        # Download button
-        st.download_button(
-            label="📥 Download Official Tax Compliance Report (.md)",
-            data=st.session_state.calculation_result,
-            file_name="Tax_Compliance_Report_FY2026.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
+        # Convert Markdown to PDF
+        pdf_bytes = b""
+        try:
+            from agents.utils import convert_markdown_to_pdf
+            pdf_bytes = convert_markdown_to_pdf(st.session_state.calculation_result)
+        except Exception as e:
+            logger.exception("Failed to compile report markdown to PDF: %s", str(e))
+            st.error(f"Failed to generate PDF version: {e}")
+            
+        if pdf_bytes:
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (PDF)",
+                data=pdf_bytes,
+                file_name="Tax_Compliance_Report_FY2026.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        else:
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (.md)",
+                data=st.session_state.calculation_result,
+                file_name="Tax_Compliance_Report_FY2026.md",
+                mime="text/markdown",
+                use_container_width=True
+            )
         st.markdown(st.session_state.calculation_result)
     else:
         st.info("The final report will appear here once calculations are run.")
