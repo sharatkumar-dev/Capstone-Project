@@ -76,12 +76,32 @@ class PDFReport(FPDF):
         # Page number
         self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", border=0, align="C")
 
+def sanitize_pdf_text(text: str) -> str:
+    """
+    Sanitizes Unicode characters to ensure standard Helvetica/Latin-1 compatibility.
+    """
+    replacements = {
+        "₹": "INR ",
+        "\u20b9": "INR ",
+        "’": "'",
+        "‘": "'",
+        "“": '"',
+        "”": '"',
+        "–": "-",  # en-dash
+        "—": "-",  # em-dash
+        "…": "...",
+    }
+    for orig, rep in replacements.items():
+        text = text.replace(orig, rep)
+    # Convert unsupported unicode chars to '?' rather than raising FPDF character error
+    return text.encode('latin-1', 'replace').decode('latin-1')
+
 def convert_markdown_to_pdf(markdown_text: str) -> bytes:
     """
     Converts structured tax Markdown advisory reports into beautifully formatted PDF documents.
     """
-    # Pre-process text to replace unicode rupee symbol to avoid encoding issues with Helvetica
-    markdown_text = markdown_text.replace("₹", "INR ").replace("\u20b9", "INR ")
+    # Pre-process text to replace unicode symbols to avoid encoding issues with Helvetica
+    markdown_text = sanitize_pdf_text(markdown_text)
 
     pdf = PDFReport()
     pdf.alias_nb_pages()
