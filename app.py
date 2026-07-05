@@ -33,8 +33,8 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
-    /* Global font overwrite */
-    html, body, [class*="css"], .stMarkdown, .stText, p, span, div, h1, h2, h3, h4, h5, h6 {
+    /* Global font overwrite - strictly text elements to avoid breaking icon webfonts */
+    html, body, .stMarkdown, p, h1, h2, h3, h4, h5, h6 {
         font-family: 'Inter', sans-serif !important;
     }
     
