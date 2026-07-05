@@ -1,9 +1,8 @@
 import os
 import sys
 import logging
-import threading
-import http.server
-import functools
+import socket
+import subprocess
 from dotenv import load_dotenv
 load_dotenv() # Load environment variables from .env file
 
@@ -14,24 +13,18 @@ import streamlit as st
 _FILE_SERVER_PORT = 8181
 _FILE_SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def _start_file_server():
-    handler = functools.partial(
-        http.server.SimpleHTTPRequestHandler,
-        directory=_FILE_SERVER_DIR
-    )
-    # Silence noisy access logs
-    class _QuietHandler(handler):
-        def log_message(self, *args): pass
-    try:
-        server = http.server.HTTPServer(("", _FILE_SERVER_PORT), _QuietHandler)
-        server.serve_forever()
-    except OSError:
-        pass  # Port already in use — server already running
+def _is_port_open(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.3)
+        return s.connect_ex(("127.0.0.1", port)) == 0
 
-if "_file_server_started" not in st.session_state:
-    t = threading.Thread(target=_start_file_server, daemon=True)
-    t.start()
-    st.session_state["_file_server_started"] = True
+if not _is_port_open(_FILE_SERVER_PORT):
+    subprocess.Popen(
+        [sys.executable, "-m", "http.server", str(_FILE_SERVER_PORT),
+         "--directory", _FILE_SERVER_DIR],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
 # ────────────────────────────────────────────────────────────────────────────
 
 # Configure enterprise-grade logging
