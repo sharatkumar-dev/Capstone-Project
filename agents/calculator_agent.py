@@ -182,8 +182,15 @@ def run_calculation(profile: dict, transactions: list) -> str:
             pdf_path_root = os.path.join(base_dir, "Tax_Compliance_Report_FY2026.pdf")
             with open(pdf_path_root, "wb") as pf:
                 pf.write(pdf_bytes)
-                
-            logger.info("Successfully generated and saved compliance report PDF to: %s and %s", pdf_path_reports, pdf_path_root)
+
+            # Also save to static/ folder for direct URL serving (bypasses Streamlit media manager)
+            static_dir = os.path.join(base_dir, "static")
+            os.makedirs(static_dir, exist_ok=True)
+            pdf_path_static = os.path.join(static_dir, "Tax_Compliance_Report_FY2026.pdf")
+            with open(pdf_path_static, "wb") as pf:
+                pf.write(pdf_bytes)
+
+            logger.info("Successfully generated and saved compliance report PDF to: %s, %s and %s", pdf_path_reports, pdf_path_root, pdf_path_static)
         except Exception as pdf_err:
             logger.exception("Failed to generate PDF version of the report: %s", str(pdf_err))
             
