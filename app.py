@@ -190,8 +190,7 @@ st.markdown("<h1 class='title-gradient'>Independent Contractor & Small Business 
 st.markdown("##### *Your 3-Agent Presumptive Tax Compliance Assistant (Sec 44ADA & 44AD)*")
 st.write("---")
 
-# Main Page Layout (Two Columns: Left for chat/actions, Right for bookkeeping & report)
-col_main, col_sidebar_right = st.columns([2, 1])
+# Main Page Layout (Full-width tabs are used below for maximum space and professional layout)
 
 # Sidebar - Local state representation and config
 with st.sidebar:
@@ -316,8 +315,14 @@ with st.sidebar:
     """
     st.markdown(summary_html, unsafe_allow_html=True)
 
-# Main Chat Interface (Left side of the screen)
-with col_main:
+# Main Page Layout (Full-width Tabs)
+tab_chat, tab_ledger, tab_report = st.tabs([
+    "💬 Onboarding Chat & CA Assistant", 
+    "📋 Bookkeeping Ledger", 
+    "📄 Tax Compliance Report"
+])
+
+with tab_chat:
     st.markdown("### 💬 Tax Agent Chat")
     
     # Display Chat History
@@ -390,8 +395,7 @@ with col_main:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
 
-# Right Column - Displays list of extracted transactions or compliance warnings
-with col_sidebar_right:
+with tab_ledger:
     st.markdown("### 📋 Bookkeeping Ledger")
     if not st.session_state.transactions:
         st.info("No transactions extracted yet. Upload files in the sidebar to begin parsing.")
@@ -410,28 +414,35 @@ with col_sidebar_right:
             expander_title = f"{badge} | {txn.get('vendor', 'Unknown')} — ₹{txn.get('amount_total_inr', 0):,.2f}"
                 
             with st.expander(expander_title):
-                edit_vendor = st.text_input("Vendor", value=txn.get('vendor'), key=f"vendor_{idx}")
-                edit_date = st.date_input("Date", value=txn.get('date'), key=f"date_{idx}")
-                edit_amount = st.number_input("Amount Total (INR)", value=float(txn.get('amount_total_inr', 0.0)), min_value=0.0, key=f"amount_{idx}")
-                edit_gst = st.number_input("GST Paid (INR)", value=float(txn.get('gst_paid_inr', 0.0)), min_value=0.0, key=f"gst_{idx}")
+                # 3 columns for general and financial data to clean up layout
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    edit_vendor = st.text_input("Vendor", value=txn.get('vendor'), key=f"vendor_{idx}")
+                    edit_date = st.date_input("Date", value=txn.get('date'), key=f"date_{idx}")
+                with col2:
+                    edit_amount = st.number_input("Amount Total (INR)", value=float(txn.get('amount_total_inr', 0.0)), min_value=0.0, key=f"amount_{idx}")
+                    edit_gst = st.number_input("GST Paid (INR)", value=float(txn.get('gst_paid_inr', 0.0)), min_value=0.0, key=f"gst_{idx}")
+                with col3:
+                    rates = [0, 5, 12, 18, 28]
+                    current_rate = txn.get('gst_rate_percent', 0)
+                    default_rate_idx = rates.index(current_rate) if current_rate in rates else 0
+                    edit_rate = st.selectbox("GST Rate %", options=rates, index=default_rate_idx, key=f"rate_{idx}")
+                    
+                    pms = ["Digital (UPI/Card/NetBanking)", "Cash", "Cheque"]
+                    current_pm = txn.get('payment_mode', 'Digital (UPI/Card/NetBanking)')
+                    default_pm_idx = pms.index(current_pm) if current_pm in pms else 0
+                    edit_pm = st.selectbox("Payment Mode", options=pms, index=default_pm_idx, key=f"payment_{idx}")
                 
-                rates = [0, 5, 12, 18, 28]
-                current_rate = txn.get('gst_rate_percent', 0)
-                default_rate_idx = rates.index(current_rate) if current_rate in rates else 0
-                edit_rate = st.selectbox("GST Rate %", options=rates, index=default_rate_idx, key=f"rate_{idx}")
-                
-                edit_desc = st.text_area("Description", value=txn.get('description', ''), key=f"desc_{idx}")
-                edit_cat = st.text_input("Category", value=txn.get('category', ''), key=f"category_{idx}")
-                
-                usages = ["Pure Business", "Pure Personal", "Mixed", "Unresolved"]
-                current_usage = txn.get('usage_type', 'Unresolved')
-                default_usage_idx = usages.index(current_usage) if current_usage in usages else 3
-                edit_usage = st.selectbox("Usage Scope", options=usages, index=default_usage_idx, key=f"usage_{idx}")
-                
-                pms = ["Digital (UPI/Card/NetBanking)", "Cash", "Cheque"]
-                current_pm = txn.get('payment_mode', 'Digital (UPI/Card/NetBanking)')
-                default_pm_idx = pms.index(current_pm) if current_pm in pms else 0
-                edit_pm = st.selectbox("Payment Mode", options=pms, index=default_pm_idx, key=f"payment_{idx}")
+                # Bottom columns for categorization & description
+                col_left, col_right = st.columns(2)
+                with col_left:
+                    edit_desc = st.text_area("Description", value=txn.get('description', ''), key=f"desc_{idx}", height=68)
+                with col_right:
+                    edit_cat = st.text_input("Category", value=txn.get('category', ''), key=f"category_{idx}")
+                    usages = ["Pure Business", "Pure Personal", "Mixed", "Unresolved"]
+                    current_usage = txn.get('usage_type', 'Unresolved')
+                    default_usage_idx = usages.index(current_usage) if current_usage in usages else 3
+                    edit_usage = st.selectbox("Usage Scope", options=usages, index=default_usage_idx, key=f"usage_{idx}")
                 
                 # Directly update state
                 st.session_state.transactions[idx] = {
@@ -447,8 +458,28 @@ with col_sidebar_right:
                     "payment_mode": edit_pm
                 }
 
+with tab_report:
+    st.markdown("### 📄 Tax Compliance Advisory Report")
+    
+    # Report generation button (at the top of the report tab)
+    report_btn = st.button(
+        "Run Presumptive Tax Calculation & Generate Report",
+        disabled=(st.session_state.profile is None or not st.session_state.transactions),
+        use_container_width=True
+    )
+    if report_btn:
+        st.session_state.current_agent = "Calculator"
+        with st.spinner("Calculator Agent is executing presumptive logic..."):
+            try:
+                report = run_calculation(st.session_state.profile, st.session_state.transactions)
+                st.session_state.calculation_result = report
+                st.success("Calculations complete!")
+                st.rerun()
+            except Exception as calc_err:
+                logger.exception("Calculator Agent execution failed: %s", str(calc_err))
+                st.error(f"Calculation failed: {str(calc_err)}")
+                
     st.markdown("---")
-    st.markdown("### 📄 Tax Compliance Report")
     
     if st.session_state.calculation_result:
         st.success("Analysis report generated successfully!")
@@ -481,21 +512,3 @@ with col_sidebar_right:
         st.markdown(st.session_state.calculation_result)
     else:
         st.info("The final report will appear here once calculations are run.")
-        
-    # Report generation button
-    report_btn = st.button(
-        "Run Presumptive Tax Calculation & Generate Report",
-        disabled=(st.session_state.profile is None or not st.session_state.transactions),
-        use_container_width=True
-    )
-    if report_btn:
-        st.session_state.current_agent = "Calculator"
-        with st.spinner("Calculator Agent is executing presumptive logic..."):
-            try:
-                report = run_calculation(st.session_state.profile, st.session_state.transactions)
-                st.session_state.calculation_result = report
-                st.success("Calculations complete!")
-                st.rerun()
-            except Exception as calc_err:
-                logger.exception("Calculator Agent execution failed: %s", str(calc_err))
-                st.error(f"Calculation failed: {str(calc_err)}")
