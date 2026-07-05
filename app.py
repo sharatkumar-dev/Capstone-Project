@@ -155,6 +155,28 @@ st.markdown("""
         transform: scale(1.02) !important;
         box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
     }
+    
+    /* Premium Tab Customizations */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 20px !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 48px !important;
+        white-space: nowrap !important;
+        background-color: transparent !important;
+        border-radius: 4px !important;
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #38bdf8 !important;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -241,6 +263,30 @@ with st.sidebar:
         </div>
         """
         st.markdown(profile_html, unsafe_allow_html=True)
+        
+        # Turnover limit progress bar & threshold alerts
+        track = prof.get("track")
+        revenue = prof.get("gross_revenue_inr", 0.0)
+        if track == "Professional":
+            limit = 7500000.0
+            limit_label = "₹75 Lakhs (Sec 44ADA)"
+        else:
+            digital = prof.get("digital_revenue_inr") or 0.0
+            cash = prof.get("cash_revenue_inr") or 0.0
+            total = digital + cash if (digital + cash) > 0 else revenue
+            cash_pct = (cash / total) if total > 0 else 0.0
+            if cash_pct > 0.05:
+                limit = 20000000.0
+                limit_label = "₹2 Crores (Sec 44AD - Cash > 5%)"
+                st.warning(f"⚠️ Cash receipts are {cash_pct*100:.1f}% (>5%). Sec 44AD limit reduced to ₹2 Crores.")
+            else:
+                limit = 30000000.0
+                limit_label = "₹3 Crores (Sec 44AD)"
+        
+        progress_val = min(revenue / limit, 1.0)
+        st.markdown(f"**Turnover Headroom Used** ({revenue*100/limit:.1f}%)")
+        st.progress(progress_val)
+        st.caption(f"₹{revenue:,.2f} of {limit_label}")
     else:
         st.markdown("""
         <div class="profile-card" style="border-left: 4px solid #eab308; background-color: rgba(234, 179, 8, 0.05);">
@@ -400,9 +446,29 @@ with tab_ledger:
     if not st.session_state.transactions:
         st.info("No transactions extracted yet. Upload files in the sidebar to begin parsing.")
     else:
+        # Interactive filters to organize transaction review
+        filter_option = st.radio(
+            "Filter Transactions by Scope",
+            options=["Show All", "💼 Business", "❌ Personal", "⚠️ Mixed", "❓ Unresolved"],
+            horizontal=True,
+            key="ledger_filter_scope"
+        )
+        
+        filter_map = {
+            "💼 Business": "Pure Business",
+            "❌ Personal": "Pure Personal",
+            "⚠️ Mixed": "Mixed",
+            "❓ Unresolved": "Unresolved"
+        }
+        
         # Loop over transactions with edit widgets
         for idx, txn in enumerate(st.session_state.transactions):
             usage = txn.get('usage_type', 'Unresolved')
+            
+            # Apply filter
+            if filter_option != "Show All" and usage != filter_map[filter_option]:
+                continue
+                
             badge = "💼 Business"
             if usage == "Pure Personal":
                 badge = "❌ Personal"
@@ -509,6 +575,52 @@ with tab_report:
                 mime="text/markdown",
                 use_container_width=True
             )
+        # Visual comparison metrics and chart
+        try:
+            import pandas as pd
+            prof = st.session_state.profile
+            revenue = prof.get("gross_revenue_inr", 0.0)
+            track = prof.get("track")
+            
+            # 1. Option A: Presumptive Deemed Income
+            if track == "Professional":
+                presumptive_income = revenue * 0.5
+            else:
+                digital = prof.get("digital_revenue_inr") or 0.0
+                cash = prof.get("cash_revenue_inr") or 0.0
+                presumptive_income = (digital * 0.06) + (cash * 0.08)
+                
+            # 2. Option B: Actual Net Income (Revenue - Expenses)
+            eligible_exps = [
+                t for t in st.session_state.transactions 
+                if t.get('usage_type') in ["Pure Business", "Mixed", "Unresolved"]
+            ]
+            local_total_expenses = sum(t.get('amount_total_inr', 0.0) for t in eligible_exps)
+            actual_net_income = max(revenue - local_total_expenses, 0.0)
+            
+            # Two column layout for visual impact
+            chart_col, metrics_col = st.columns([2, 1])
+            with chart_col:
+                st.markdown("#### 📊 Comparative Analysis: Taxable Income")
+                comparison_df = pd.DataFrame({
+                    "Filing Option": ["Option A: Presumptive", "Option B: Regular (Net Income)"],
+                    "Amount (INR)": [presumptive_income, actual_net_income]
+                })
+                st.bar_chart(data=comparison_df, x="Filing Option", y="Amount (INR)", use_container_width=True)
+            with metrics_col:
+                st.markdown("#### 💡 Quick Comparison")
+                st.metric(label="Option A (Deemed Income)", value=f"₹{presumptive_income:,.2f}")
+                st.metric(label="Option B (Actual Net Income)", value=f"₹{actual_net_income:,.2f}", delta=f"₹{actual_net_income - presumptive_income:,.2f}" if actual_net_income > presumptive_income else None, delta_color="inverse")
+                
+                # Dynamic advice
+                if actual_net_income < presumptive_income:
+                    st.info("💡 **Recommendation**: Option B (Regular Filing) has lower taxable income. You might consider standard bookkeeping and audit.")
+                else:
+                    st.info("💡 **Recommendation**: Option A (Presumptive) has lower taxable income. Highly recommended for compliance savings!")
+            st.markdown("---")
+        except Exception as chart_err:
+            logger.warning("Failed to render comparison chart: %s", str(chart_err))
+
         st.markdown(st.session_state.calculation_result)
     else:
         st.info("The final report will appear here once calculations are run.")
