@@ -550,13 +550,19 @@ with tab_report:
     if st.session_state.calculation_result:
         st.success("Analysis report generated successfully!")
         
-        # Convert Markdown to PDF
+        # Load PDF report directly from disk to prevent Streamlit dynamic download button rebuild bugs
         pdf_bytes = b""
         try:
-            from agents.utils import convert_markdown_to_pdf
-            pdf_bytes = convert_markdown_to_pdf(st.session_state.calculation_result)
+            import os
+            pdf_path = "Tax_Compliance_Report_FY2026.pdf"
+            if os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as pf:
+                    pdf_bytes = pf.read()
+            else:
+                from agents.utils import convert_markdown_to_pdf
+                pdf_bytes = convert_markdown_to_pdf(st.session_state.calculation_result)
         except Exception as e:
-            logger.exception("Failed to compile report markdown to PDF: %s", str(e))
+            logger.exception("Failed to read/compile PDF report: %s", str(e))
             st.error(f"Failed to generate PDF version: {e}")
             
         if pdf_bytes:
