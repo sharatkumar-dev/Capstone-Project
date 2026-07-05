@@ -566,13 +566,30 @@ with tab_report:
             st.error(f"Failed to generate PDF version: {e}")
             
         if pdf_bytes:
-            st.download_button(
-                label="📥 Download Official Tax Compliance Report (PDF)",
-                data=pdf_bytes,
-                file_name="Tax_Compliance_Report_FY2026.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            import base64
+            b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_download_html = f"""
+            <a href="data:application/pdf;base64,{b64_pdf}" download="Tax_Compliance_Report_FY2026.pdf" style="text-decoration: none; color: white; display: block;">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    text-align: center;
+                    cursor: pointer;
+                    margin-bottom: 12px;
+                    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+                ">
+                    📥 Download Official Tax Compliance Report (PDF)
+                </div>
+            </a>
+            """
+            st.markdown(pdf_download_html, unsafe_allow_html=True)
         else:
             st.download_button(
                 label="📥 Download Official Tax Compliance Report (.md)",
