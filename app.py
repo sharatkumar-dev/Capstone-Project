@@ -579,17 +579,24 @@ with tab_report:
             except Exception as e:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
-        # Use Streamlit's built-in static file serving — direct URL, no UUID media manager
-        static_pdf_url = "/app/static/Tax_Compliance_Report_FY2026.pdf"
-        st.markdown(
-            f"""<a href="{static_pdf_url}" download="Tax_Compliance_Report_FY2026.pdf"
-                style="display:block;text-decoration:none;background:linear-gradient(90deg,#2563eb,#1d4ed8);
-                color:white;text-align:center;padding:12px 20px;border-radius:8px;font-weight:600;
-                font-size:15px;font-family:sans-serif;box-shadow:0 4px 15px rgba(37,99,235,0.35);cursor:pointer;">
-                📥 Download Official Tax Compliance Report (PDF)
-            </a>""",
-            unsafe_allow_html=True
-        )
+        if pdf_bytes:
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (PDF)",
+                data=pdf_bytes,
+                file_name="Tax_Compliance_Report_FY2026.pdf",
+                mime="application/pdf",
+                key="pdf_download_btn",
+                use_container_width=True
+            )
+        else:
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (.md)",
+                data=st.session_state.calculation_result,
+                file_name="Tax_Compliance_Report_FY2026.md",
+                mime="text/markdown",
+                key="md_download_btn",
+                use_container_width=True
+            )
         # Visual comparison metrics and chart
         try:
             import pandas as pd

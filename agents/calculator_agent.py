@@ -155,7 +155,15 @@ def run_calculation(profile: dict, transactions: list) -> str:
                 )
             }
         )
-        report_content = response.text
+        report_content = response.text.strip()
+        
+        # Strip markdown code fence if LLM wrapped the response (e.g. ```markdown ... ```)
+        if report_content.startswith("```"):
+            # Remove opening fence line (```markdown or ```)
+            report_content = report_content.split("\n", 1)[1] if "\n" in report_content else report_content
+            # Remove closing fence if present
+            if report_content.strip().endswith("```"):
+                report_content = report_content.strip().rsplit("```", 1)[0].strip()
         
         # 7. Write to local directory (both reports folder and local root directory)
         reports_dir = os.path.join(base_dir, "reports")
