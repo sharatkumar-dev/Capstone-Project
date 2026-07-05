@@ -57,16 +57,19 @@ def run_router_agent(messages: list) -> RouterResponse:
 
     # Call Gemini model
     try:
-        logger.info("Calling Gemini model for Router Agent...")
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json",
-                response_schema=RouterResponse,
-                temperature=0.1
-            )
+        from agents.utils import call_gemini_with_fallback
+        response = call_gemini_with_fallback(
+            client=client,
+            method_name="generate_content",
+            model_args={
+                "contents": contents,
+                "config": types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    response_schema=RouterResponse,
+                    temperature=0.1
+                )
+            }
         )
         
         # Parse Response

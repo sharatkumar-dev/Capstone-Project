@@ -68,19 +68,22 @@ def analyze_document(file_name: str, file_bytes: bytes, mime_type: str) -> Extra
 
     # 3. Call Gemini Multimodal API
     try:
-        logger.info("Calling Gemini Vision model for document: %s", file_name)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=[
-                "Extract the receipt/invoice details from this document.",
-                img
-            ],
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json",
-                response_schema=ExtractedInvoiceFields,
-                temperature=0.1
-            )
+        from agents.utils import call_gemini_with_fallback
+        response = call_gemini_with_fallback(
+            client=client,
+            method_name="generate_content",
+            model_args={
+                "contents": [
+                    "Extract the receipt/invoice details from this document.",
+                    img
+                ],
+                "config": types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    response_schema=ExtractedInvoiceFields,
+                    temperature=0.1
+                )
+            }
         )
 
         # Parse output

@@ -140,17 +140,20 @@ def run_calculation(profile: dict, transactions: list) -> str:
     client = genai.Client(api_key=api_key)
     
     try:
-        logger.info("Calling Gemini model for Calculator Agent report writer...")
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=[
-                "Write a professional tax compliance advisory report in Markdown format using the following details.",
-                prompt_data
-            ],
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.1
-            )
+        from agents.utils import call_gemini_with_fallback
+        response = call_gemini_with_fallback(
+            client=client,
+            method_name="generate_content",
+            model_args={
+                "contents": [
+                    "Write a professional tax compliance advisory report in Markdown format using the following details.",
+                    prompt_data
+                ],
+                "config": types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.1
+                )
+            }
         )
         report_content = response.text
         
