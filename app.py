@@ -207,6 +207,9 @@ if "current_agent" not in st.session_state:
 if "calculation_result" not in st.session_state:
     st.session_state.calculation_result = None  # Holds generated Markdown report
 
+if "pdf_report_bytes" not in st.session_state:
+    st.session_state.pdf_report_bytes = b""  # Holds pre-compiled PDF bytes for stable download
+
 # App Title
 st.markdown("<h1 class='title-gradient'>Independent Contractor & Small Business Tax Guide</h1>", unsafe_allow_html=True)
 st.markdown("##### *Your 3-Agent Presumptive Tax Compliance Assistant (Sec 44ADA & 44AD)*")
@@ -539,6 +542,18 @@ with tab_report:
             try:
                 report = run_calculation(st.session_state.profile, st.session_state.transactions)
                 st.session_state.calculation_result = report
+                # Cache PDF bytes immediately after generation so download is stable
+                try:
+                    pdf_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Tax_Compliance_Report_FY2026.pdf")
+                    if os.path.exists(pdf_path):
+                        with open(pdf_path, "rb") as pf:
+                            st.session_state.pdf_report_bytes = pf.read()
+                    else:
+                        from agents.utils import convert_markdown_to_pdf
+                        st.session_state.pdf_report_bytes = convert_markdown_to_pdf(report)
+                except Exception as pdf_err:
+                    logger.warning("Could not pre-cache PDF bytes: %s", str(pdf_err))
+                    st.session_state.pdf_report_bytes = b""
                 st.success("Calculations complete!")
                 st.rerun()
             except Exception as calc_err:
@@ -550,52 +565,36 @@ with tab_report:
     if st.session_state.calculation_result:
         st.success("Analysis report generated successfully!")
         
-        # Load PDF report directly from disk to prevent Streamlit dynamic download button rebuild bugs
-        pdf_bytes = b""
-        try:
-            import os
-            pdf_path = "Tax_Compliance_Report_FY2026.pdf"
-            if os.path.exists(pdf_path):
-                with open(pdf_path, "rb") as pf:
-                    pdf_bytes = pf.read()
-            else:
-                from agents.utils import convert_markdown_to_pdf
-                pdf_bytes = convert_markdown_to_pdf(st.session_state.calculation_result)
-        except Exception as e:
-            logger.exception("Failed to read/compile PDF report: %s", str(e))
-            st.error(f"Failed to generate PDF version: {e}")
-            
+        # Serve PDF from session_state cache (pre-compiled at generation time)
+        pdf_bytes = st.session_state.get("pdf_report_bytes", b"")
+
+        # If not yet cached (e.g. page reload after restart), reload from disk
+        if not pdf_bytes:
+            try:
+                pdf_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Tax_Compliance_Report_FY2026.pdf")
+                if os.path.exists(pdf_path):
+                    with open(pdf_path, "rb") as pf:
+                        pdf_bytes = pf.read()
+                    st.session_state.pdf_report_bytes = pdf_bytes
+            except Exception as e:
+                logger.exception("Failed to load PDF from disk: %s", str(e))
+
         if pdf_bytes:
-            import base64
-            b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-            pdf_download_html = f"""
-            <a href="data:application/pdf;base64,{b64_pdf}" download="Tax_Compliance_Report_FY2026.pdf" style="text-decoration: none; color: white; display: block;">
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
-                    color: white;
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    text-align: center;
-                    cursor: pointer;
-                    margin-bottom: 12px;
-                    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-                ">
-                    📥 Download Official Tax Compliance Report (PDF)
-                </div>
-            </a>
-            """
-            st.markdown(pdf_download_html, unsafe_allow_html=True)
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (PDF)",
+                data=pdf_bytes,
+                file_name="Tax_Compliance_Report_FY2026.pdf",
+                mime="application/pdf",
+                key="pdf_download_btn",
+                use_container_width=True
+            )
         else:
             st.download_button(
                 label="📥 Download Official Tax Compliance Report (.md)",
                 data=st.session_state.calculation_result,
                 file_name="Tax_Compliance_Report_FY2026.md",
                 mime="text/markdown",
+                key="md_download_btn",
                 use_container_width=True
             )
         # Visual comparison metrics and chart
