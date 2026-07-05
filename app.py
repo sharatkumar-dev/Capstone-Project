@@ -1,11 +1,38 @@
 import os
 import sys
 import logging
+import threading
+import http.server
+import functools
 from dotenv import load_dotenv
 load_dotenv() # Load environment variables from .env file
 
 from PIL import Image
 import streamlit as st
+
+# ── Background file server on port 8181 (serves PDF reports directly) ──────
+_FILE_SERVER_PORT = 8181
+_FILE_SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _start_file_server():
+    handler = functools.partial(
+        http.server.SimpleHTTPRequestHandler,
+        directory=_FILE_SERVER_DIR
+    )
+    # Silence noisy access logs
+    class _QuietHandler(handler):
+        def log_message(self, *args): pass
+    try:
+        server = http.server.HTTPServer(("", _FILE_SERVER_PORT), _QuietHandler)
+        server.serve_forever()
+    except OSError:
+        pass  # Port already in use — server already running
+
+if "_file_server_started" not in st.session_state:
+    t = threading.Thread(target=_start_file_server, daemon=True)
+    t.start()
+    st.session_state["_file_server_started"] = True
+# ────────────────────────────────────────────────────────────────────────────
 
 # Configure enterprise-grade logging
 logging.basicConfig(
@@ -579,24 +606,21 @@ with tab_report:
             except Exception as e:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
-        if pdf_bytes:
-            st.download_button(
-                label="📥 Download Official Tax Compliance Report (PDF)",
-                data=pdf_bytes,
-                file_name="Tax_Compliance_Report_FY2026.pdf",
-                mime="application/pdf",
-                key="pdf_download_btn",
-                use_container_width=True
+        # Serve PDF via background file server (port 8181) — bypasses Streamlit media manager
+        pdf_filename = "Tax_Compliance_Report_FY2026.pdf"
+        pdf_disk_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), pdf_filename)
+        if os.path.exists(pdf_disk_path):
+            pdf_url = f"http://localhost:{_FILE_SERVER_PORT}/{pdf_filename}"
+            st.markdown(
+                f'<a href="{pdf_url}" download="{pdf_filename}" target="_blank" '
+                f'style="display:block;text-decoration:none;background:linear-gradient(90deg,#2563eb,#1d4ed8);'
+                f'color:white;text-align:center;padding:12px 20px;border-radius:8px;font-weight:600;'
+                f'font-size:15px;font-family:sans-serif;box-shadow:0 4px 15px rgba(37,99,235,0.35);">'
+                f'📥 Download Official Tax Compliance Report (PDF)</a>',
+                unsafe_allow_html=True
             )
         else:
-            st.download_button(
-                label="📥 Download Official Tax Compliance Report (.md)",
-                data=st.session_state.calculation_result,
-                file_name="Tax_Compliance_Report_FY2026.md",
-                mime="text/markdown",
-                key="md_download_btn",
-                use_container_width=True
-            )
+            st.info("Report file not found on disk. Please regenerate the report.")
         # Visual comparison metrics and chart
         try:
             import pandas as pd
