@@ -580,14 +580,35 @@ with tab_report:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
         if pdf_bytes:
-            st.download_button(
-                label="📥 Download Official Tax Compliance Report (PDF)",
-                data=pdf_bytes,
-                file_name="Tax_Compliance_Report_FY2026.pdf",
-                mime="application/pdf",
-                key="pdf_download_btn",
-                use_container_width=True
-            )
+            import base64
+            import streamlit.components.v1 as components
+            b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+            download_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <body style="margin:0;padding:0;background:transparent;">
+                <a href="data:application/pdf;base64,{b64_pdf}"
+                   download="Tax_Compliance_Report_FY2026.pdf"
+                   style="
+                       display:block;
+                       text-decoration:none;
+                       background:linear-gradient(90deg,#2563eb,#1d4ed8);
+                       color:white;
+                       text-align:center;
+                       padding:12px 20px;
+                       border-radius:8px;
+                       font-weight:600;
+                       font-size:15px;
+                       font-family:sans-serif;
+                       box-shadow:0 4px 15px rgba(37,99,235,0.35);
+                       cursor:pointer;
+                   ">
+                    📥 Download Official Tax Compliance Report (PDF)
+                </a>
+            </body>
+            </html>
+            """
+            components.html(download_html, height=60)
         else:
             st.download_button(
                 label="📥 Download Official Tax Compliance Report (.md)",
