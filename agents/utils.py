@@ -60,11 +60,15 @@ def call_gemini_with_fallback(client, method_name: str, model_args: dict, fallba
 from fpdf import FPDF
 
 class PDFReport(FPDF):
+    def __init__(self, assessment_year="2026-27"):
+        super().__init__()
+        self.assessment_year = assessment_year
+
     def header(self):
         # Set font
         self.set_font("Helvetica", "I", 8)
         self.set_text_color(128, 128, 128)
-        self.cell(0, 10, "TAX COMPLIANCE ADVISORY REPORT - AY 2025-26", border=0, align="R")
+        self.cell(0, 10, f"TAX COMPLIANCE ADVISORY REPORT - AY {self.assessment_year}", border=0, align="R")
         self.ln(15)
 
     def footer(self):
@@ -96,14 +100,14 @@ def sanitize_pdf_text(text: str) -> str:
     # Convert unsupported unicode chars to '?' rather than raising FPDF character error
     return text.encode('latin-1', 'replace').decode('latin-1')
 
-def convert_markdown_to_pdf(markdown_text: str) -> bytes:
+def convert_markdown_to_pdf(markdown_text: str, assessment_year: str = "2026-27") -> bytes:
     """
     Converts structured tax Markdown advisory reports into beautifully formatted PDF documents.
     """
     # Pre-process text to replace unicode symbols to avoid encoding issues with Helvetica
     markdown_text = sanitize_pdf_text(markdown_text)
 
-    pdf = PDFReport()
+    pdf = PDFReport(assessment_year=assessment_year)
     pdf.alias_nb_pages()
     pdf.add_page()
     pdf.set_margins(20, 20, 20)

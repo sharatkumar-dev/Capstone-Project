@@ -32,13 +32,22 @@ def run_calculation(profile: dict, transactions: list) -> str:
             "Estimated revenue of ₹{:,} exceeds the statutory cap of ₹75 Lakhs for Section 44ADA."
         ).format(int(gross_revenue))
         logger.warning(refusal_reason)
-    elif track == "Small Business" and gross_revenue > 30000000:
-        is_refused = True
-        refusal_reason = (
-            "STATUTORY CAP EXCEEDED: Section 44AB tax audit compulsory. "
-            "Estimated turnover of ₹{:,} exceeds the statutory cap of ₹3 Crores for Section 44AD."
-        ).format(int(gross_revenue))
-        logger.warning(refusal_reason)
+    elif track == "Small Business":
+        digital_rev = float(profile.get("digital_revenue_inr") or 0.0)
+        cash_rev = float(profile.get("cash_revenue_inr") or 0.0)
+        total_rev = digital_rev + cash_rev if (digital_rev + cash_rev) > 0 else gross_revenue
+        cash_pct = (cash_rev / total_rev) if total_rev > 0 else 0.0
+        
+        limit = 20000000.0 if cash_pct > 0.05 else 30000000.0
+        limit_label = "₹2 Crores (Cash receipts > 5%)" if cash_pct > 0.05 else "₹3 Crores"
+        
+        if gross_revenue > limit:
+            is_refused = True
+            refusal_reason = (
+                "STATUTORY CAP EXCEEDED: Section 44AB tax audit compulsory. "
+                "Estimated turnover of ₹{:,} exceeds the statutory cap of {} for Section 44AD."
+            ).format(int(gross_revenue), limit_label)
+            logger.warning(refusal_reason)
 
     # 3. Perform calculations (if not refused)
     presumptive_income = 0.0
@@ -181,7 +190,7 @@ def run_calculation(profile: dict, transactions: list) -> str:
         # Save PDF versions
         try:
             from agents.utils import convert_markdown_to_pdf
-            pdf_bytes = convert_markdown_to_pdf(report_content)
+            pdf_bytes = convert_markdown_to_pdf(report_content, assessment_year)
             
             pdf_path_reports = os.path.join(reports_dir, "Tax_Compliance_Report_FY2026.pdf")
             with open(pdf_path_reports, "wb") as pf:

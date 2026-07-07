@@ -24,3 +24,8 @@ data/*
 !data/README.md
 reports/*
 !reports/README.md
+
+# Generated compliance reports in root and static
+Tax_Compliance_Report_FY2026.*
+test_output.pdf
+static/Tax_Compliance_Report_FY2026.pdf

@@ -632,7 +632,8 @@ with tab_report:
                             st.session_state.pdf_report_bytes = pf.read()
                     else:
                         from agents.utils import convert_markdown_to_pdf
-                        st.session_state.pdf_report_bytes = convert_markdown_to_pdf(report)
+                        ay = st.session_state.profile.get("assessment_year", "2026-27")
+                        st.session_state.pdf_report_bytes = convert_markdown_to_pdf(report, ay)
                 except Exception as pdf_err:
                     logger.warning("Could not pre-cache PDF bytes: %s", str(pdf_err))
                     st.session_state.pdf_report_bytes = b""
