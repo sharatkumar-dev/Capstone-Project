@@ -187,7 +187,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Initialize Session State Cache Helpers for API Quota Protection
+# Initialize Session State Cache Helpers for API Quota Protection
 import json
+import datetime
 
 def load_session_cache():
     cache_path = os.path.join("reports", "session_cache.json")
@@ -198,7 +200,17 @@ def load_session_cache():
             st.session_state.messages = data.get("messages", [])
             st.session_state.profile = data.get("profile", None)
             st.session_state.temp_profile = data.get("temp_profile", {})
-            st.session_state.transactions = data.get("transactions", [])
+            
+            # Reconstruct datetime.date objects from string format for edit fields
+            txns = data.get("transactions", [])
+            for txn in txns:
+                if "date" in txn and isinstance(txn["date"], str):
+                    try:
+                        txn["date"] = datetime.datetime.strptime(txn["date"], "%Y-%m-%d").date()
+                    except Exception:
+                        pass
+            st.session_state.transactions = txns
+            
             st.session_state.processed_files = set(data.get("processed_files", []))
             st.session_state.current_agent = data.get("current_agent", "Router")
             st.session_state.calculation_result = data.get("calculation_result", None)
@@ -216,11 +228,19 @@ def save_session_cache():
     os.makedirs("reports", exist_ok=True)
     cache_path = os.path.join("reports", "session_cache.json")
     try:
+        # Pre-process transactions to convert any datetime.date objects to string format 'YYYY-MM-DD'
+        processed_txns = []
+        for txn in st.session_state.transactions:
+            txn_copy = txn.copy()
+            if "date" in txn_copy and hasattr(txn_copy["date"], "isoformat"):
+                txn_copy["date"] = txn_copy["date"].isoformat()
+            processed_txns.append(txn_copy)
+            
         data = {
             "messages": st.session_state.messages,
             "profile": st.session_state.profile,
             "temp_profile": st.session_state.temp_profile,
-            "transactions": st.session_state.transactions,
+            "transactions": processed_txns,
             "processed_files": list(st.session_state.processed_files),
             "current_agent": st.session_state.current_agent,
             "calculation_result": st.session_state.calculation_result
