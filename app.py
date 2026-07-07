@@ -177,83 +177,10 @@ st.markdown("""
         color: #38bdf8 !important;
         font-weight: 700 !important;
     }
-    
-    /* Hide Streamlit default branding, main menu, deploy button, and headers for bespoke SaaS appearance */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stAppDeployButton {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State Cache Helpers for API Quota Protection
-# Initialize Session State Cache Helpers for API Quota Protection
-import json
-import datetime
-
-def load_session_cache():
-    cache_path = os.path.join("reports", "session_cache.json")
-    if os.path.exists(cache_path):
-        try:
-            with open(cache_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            st.session_state.messages = data.get("messages", [])
-            st.session_state.profile = data.get("profile", None)
-            st.session_state.temp_profile = data.get("temp_profile", {})
-            
-            # Reconstruct datetime.date objects from string format for edit fields
-            txns = data.get("transactions", [])
-            for txn in txns:
-                if "date" in txn and isinstance(txn["date"], str):
-                    try:
-                        txn["date"] = datetime.datetime.strptime(txn["date"], "%Y-%m-%d").date()
-                    except Exception:
-                        pass
-            st.session_state.transactions = txns
-            
-            st.session_state.processed_files = set(data.get("processed_files", []))
-            st.session_state.current_agent = data.get("current_agent", "Router")
-            st.session_state.calculation_result = data.get("calculation_result", None)
-            
-            # Re-read PDF bytes from static/ if calculation_result exists
-            pdf_path = os.path.join("static", "Tax_Compliance_Report_FY2026.pdf")
-            if os.path.exists(pdf_path):
-                with open(pdf_path, "rb") as pf:
-                    st.session_state.pdf_report_bytes = pf.read()
-            logger.info("Successfully loaded session state from reports/session_cache.json")
-        except Exception as e:
-            logger.warning("Could not load session cache: %s", str(e))
-
-def save_session_cache():
-    os.makedirs("reports", exist_ok=True)
-    cache_path = os.path.join("reports", "session_cache.json")
-    try:
-        # Pre-process transactions to convert any datetime.date objects to string format 'YYYY-MM-DD'
-        processed_txns = []
-        for txn in st.session_state.transactions:
-            txn_copy = txn.copy()
-            if "date" in txn_copy and hasattr(txn_copy["date"], "isoformat"):
-                txn_copy["date"] = txn_copy["date"].isoformat()
-            processed_txns.append(txn_copy)
-            
-        data = {
-            "messages": st.session_state.messages,
-            "profile": st.session_state.profile,
-            "temp_profile": st.session_state.temp_profile,
-            "transactions": processed_txns,
-            "processed_files": list(st.session_state.processed_files),
-            "current_agent": st.session_state.current_agent,
-            "calculation_result": st.session_state.calculation_result
-        }
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        logger.warning("Could not save session cache: %s", str(e))
-
 # Initialize Session State
-if "messages" not in st.session_state:
-    load_session_cache()
-
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -438,7 +365,7 @@ with st.sidebar:
     st.markdown(summary_html, unsafe_allow_html=True)
     
     st.markdown("---")
-    if st.button("🗑️ Reset Session & Clear Cache", use_container_width=True):
+    if st.button("🗑️ Reset Session", use_container_width=True):
         st.session_state.messages = [
             {
                 "role": "assistant",
@@ -452,14 +379,6 @@ with st.sidebar:
         st.session_state.current_agent = "Router"
         st.session_state.calculation_result = None
         st.session_state.pdf_report_bytes = b""
-        
-        # Clear cache file
-        cache_path = os.path.join("reports", "session_cache.json")
-        if os.path.exists(cache_path):
-            try:
-                os.remove(cache_path)
-            except Exception:
-                pass
         
         # Also clean up saved PDF/MD files to ensure clean state
         pdf_path = os.path.join("static", "Tax_Compliance_Report_FY2026.pdf")
@@ -752,6 +671,3 @@ with tab_report:
         st.markdown(st.session_state.calculation_result)
     else:
         st.info("The final report will appear here once calculations are run.")
-
-# Auto-save session cache at the end of every rerun
-save_session_cache()
