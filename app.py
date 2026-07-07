@@ -177,6 +177,12 @@ st.markdown("""
         color: #38bdf8 !important;
         font-weight: 700 !important;
     }
+    
+    /* Hide Streamlit default branding, main menu, deploy button, and headers for bespoke SaaS appearance */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stAppDeployButton {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
