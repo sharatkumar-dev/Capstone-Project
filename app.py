@@ -1,31 +1,11 @@
 import os
 import sys
 import logging
-import socket
-import subprocess
 from dotenv import load_dotenv
 load_dotenv() # Load environment variables from .env file
 
 from PIL import Image
 import streamlit as st
-
-# ── Background file server on port 8181 (serves PDF reports directly) ──────
-_FILE_SERVER_PORT = 8181
-_FILE_SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
-
-def _is_port_open(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.3)
-        return s.connect_ex(("127.0.0.1", port)) == 0
-
-if not _is_port_open(_FILE_SERVER_PORT):
-    subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(_FILE_SERVER_PORT),
-         "--directory", _FILE_SERVER_DIR],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
-# ────────────────────────────────────────────────────────────────────────────
 
 # Configure enterprise-grade logging
 logging.basicConfig(
@@ -200,7 +180,54 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize Session State Cache Helpers for API Quota Protection
+import json
+
+def load_session_cache():
+    cache_path = os.path.join("reports", "session_cache.json")
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            st.session_state.messages = data.get("messages", [])
+            st.session_state.profile = data.get("profile", None)
+            st.session_state.temp_profile = data.get("temp_profile", {})
+            st.session_state.transactions = data.get("transactions", [])
+            st.session_state.processed_files = set(data.get("processed_files", []))
+            st.session_state.current_agent = data.get("current_agent", "Router")
+            st.session_state.calculation_result = data.get("calculation_result", None)
+            
+            # Re-read PDF bytes from static/ if calculation_result exists
+            pdf_path = os.path.join("static", "Tax_Compliance_Report_FY2026.pdf")
+            if os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as pf:
+                    st.session_state.pdf_report_bytes = pf.read()
+            logger.info("Successfully loaded session state from reports/session_cache.json")
+        except Exception as e:
+            logger.warning("Could not load session cache: %s", str(e))
+
+def save_session_cache():
+    os.makedirs("reports", exist_ok=True)
+    cache_path = os.path.join("reports", "session_cache.json")
+    try:
+        data = {
+            "messages": st.session_state.messages,
+            "profile": st.session_state.profile,
+            "temp_profile": st.session_state.temp_profile,
+            "transactions": st.session_state.transactions,
+            "processed_files": list(st.session_state.processed_files),
+            "current_agent": st.session_state.current_agent,
+            "calculation_result": st.session_state.calculation_result
+        }
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.warning("Could not save session cache: %s", str(e))
+
 # Initialize Session State
+if "messages" not in st.session_state:
+    load_session_cache()
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -210,25 +237,25 @@ if "messages" not in st.session_state:
     ]
 
 if "profile" not in st.session_state:
-    st.session_state.profile = None  # Will hold TaxpayerProfile dict once completed
+    st.session_state.profile = None
 
 if "temp_profile" not in st.session_state:
-    st.session_state.temp_profile = {}  # Holds partially extracted fields
+    st.session_state.temp_profile = {}
 
 if "transactions" not in st.session_state:
-    st.session_state.transactions = []  # Will hold List[ExtractedInvoiceItem]
+    st.session_state.transactions = []
 
 if "processed_files" not in st.session_state:
-    st.session_state.processed_files = set()  # Set of filenames already parsed
+    st.session_state.processed_files = set()
 
 if "current_agent" not in st.session_state:
     st.session_state.current_agent = "Router"
 
 if "calculation_result" not in st.session_state:
-    st.session_state.calculation_result = None  # Holds generated Markdown report
+    st.session_state.calculation_result = None
 
 if "pdf_report_bytes" not in st.session_state:
-    st.session_state.pdf_report_bytes = b""  # Holds pre-compiled PDF bytes for stable download
+    st.session_state.pdf_report_bytes = b""
 
 # App Title
 st.markdown("<h1 class='title-gradient'>Independent Contractor & Small Business Tax Guide</h1>", unsafe_allow_html=True)
@@ -383,6 +410,41 @@ with st.sidebar:
     </div>
     """
     st.markdown(summary_html, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    if st.button("🗑️ Reset Session & Clear Cache", use_container_width=True):
+        st.session_state.messages = [
+            {
+                "role": "assistant",
+                "content": "Namaste! I am your Indian presumptive tax assistant. Let's get you onboarded first. What is your name or the name of your business entity?"
+            }
+        ]
+        st.session_state.profile = None
+        st.session_state.temp_profile = {}
+        st.session_state.transactions = []
+        st.session_state.processed_files = set()
+        st.session_state.current_agent = "Router"
+        st.session_state.calculation_result = None
+        st.session_state.pdf_report_bytes = b""
+        
+        # Clear cache file
+        cache_path = os.path.join("reports", "session_cache.json")
+        if os.path.exists(cache_path):
+            try:
+                os.remove(cache_path)
+            except Exception:
+                pass
+        
+        # Also clean up saved PDF/MD files to ensure clean state
+        pdf_path = os.path.join("static", "Tax_Compliance_Report_FY2026.pdf")
+        if os.path.exists(pdf_path):
+            try:
+                os.remove(pdf_path)
+            except Exception:
+                pass
+                
+        st.success("Session reset complete!")
+        st.rerun()
 
 # Main Page Layout (Full-width Tabs)
 tab_chat, tab_ledger, tab_report = st.tabs([
@@ -599,11 +661,11 @@ with tab_report:
             except Exception as e:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
-        # Serve PDF via background file server (port 8181) — bypasses Streamlit media manager
+        # Serve PDF via Streamlit's native static file serving (bypasses media manager and port issues)
         pdf_filename = "Tax_Compliance_Report_FY2026.pdf"
-        pdf_disk_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), pdf_filename)
+        pdf_disk_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", pdf_filename)
         if os.path.exists(pdf_disk_path):
-            pdf_url = f"http://localhost:{_FILE_SERVER_PORT}/{pdf_filename}"
+            pdf_url = f"/app/static/{pdf_filename}"
             st.markdown(
                 f'<a href="{pdf_url}" download="{pdf_filename}" target="_blank" '
                 f'style="display:block;text-decoration:none;background:linear-gradient(90deg,#2563eb,#1d4ed8);'
@@ -663,3 +725,6 @@ with tab_report:
         st.markdown(st.session_state.calculation_result)
     else:
         st.info("The final report will appear here once calculations are run.")
+
+# Auto-save session cache at the end of every rerun
+save_session_cache()
