@@ -1,6 +1,4 @@
-﻿FROM python:3.11-slim
-
-RUN apt-get update && apt-get install -y poppler-utils && rm -rf /var/lib/apt/lists/*
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -12,8 +10,4 @@ COPY . .
 
 EXPOSE 8080
 
-ENV STREAMLIT_SERVER_PORT=8080
-ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-ENV STREAMLIT_SERVER_HEADLESS=true
-
-CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+CMD ["sh", "-c", "streamlit run app.py --server.port=${PORT:-8080} --server.address=0.0.0.0"]

@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    
+    <!-- Premium Title Gradient -->
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    
+    <!-- Agent Node Gradients -->
+    <radialGradient id="node-router" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="1" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.2" />
+    </radialGradient>
+    
+    <radialGradient id="node-vision" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="1" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.2" />
+    </radialGradient>
+    
+    <radialGradient id="node-calc" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="1" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.2" />
+    </radialGradient>
+
+    <!-- Drop Shadows / Glows -->
+    <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glow-gold" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-grad)" />
+
+  <!-- Abstract Tech Grid & Network Lines -->
+  <g stroke="#ffffff" stroke-opacity="0.03" stroke-width="1">
+    <line x1="100" y1="0" x2="100" y2="630" />
+    <line x1="200" y1="0" x2="200" y2="630" />
+    <line x1="300" y1="0" x2="300" y2="630" />
+    <line x1="400" y1="0" x2="400" y2="630" />
+    <line x1="500" y1="0" x2="500" y2="630" />
+    <line x1="600" y1="0" x2="600" y2="630" />
+    <line x1="700" y1="0" x2="700" y2="630" />
+    <line x1="800" y1="0" x2="800" y2="630" />
+    <line x1="900" y1="0" x2="900" y2="630" />
+    <line x1="1000" y1="0" x2="1000" y2="630" />
+    <line x1="1100" y1="0" x2="1100" y2="630" />
+    
+    <line x1="0" y1="100" x2="1200" y2="100" />
+    <line x1="0" y1="200" x2="1200" y2="200" />
+    <line x1="0" y1="300" x2="1200" y2="300" />
+    <line x1="0" y1="400" x2="1200" y2="400" />
+    <line x1="0" y1="500" x2="1200" y2="500" />
+    <line x1="0" y1="600" x2="1200" y2="600" />
+  </g>
+
+  <!-- Network Interconnections (Connecting the Agents) -->
+  <g stroke="#38bdf8" stroke-opacity="0.15" stroke-width="3" fill="none">
+    <path d="M 250,450 C 450,420 500,480 600,450" />
+    <path d="M 600,450 C 700,420 800,480 950,450" />
+    <path d="M 250,450 C 450,300 750,300 950,450" />
+  </g>
+
+  <!-- Left Side: Project Titles -->
+  <g transform="translate(80, 0)">
+    <!-- Rupee symbol icon shadow -->
+    <text x="0" y="160" font-family="'Inter', sans-serif" font-weight="900" font-size="70" fill="url(#text-grad)">💼</text>
+    
+    <!-- Title -->
+    <text x="90" y="150" font-family="'Inter', sans-serif" font-weight="900" font-size="44" fill="url(#text-grad)">INDIAN PRESUMPTIVE</text>
+    <text x="90" y="210" font-family="'Inter', sans-serif" font-weight="900" font-size="44" fill="url(#text-grad)">TAX ASSISTANT</text>
+    
+    <!-- Subtitle -->
+    <text x="90" y="255" font-family="'Inter', sans-serif" font-weight="600" font-size="18" fill="#94a3b8">Multi-Agent AI Compliance Framework (Sec 44ADA &amp; 44AD)</text>
+  </g>
+
+  <!-- Right Side: 3-Agent Core Nodes -->
+  
+  <!-- 1. Router Agent (CA Onboarding) -->
+  <g transform="translate(250, 450)" filter="url(#glow-blue)">
+    <circle r="70" fill="url(#node-router)" />
+    <circle r="25" fill="#1e293b" stroke="#60a5fa" stroke-width="2" />
+    <text y="7" font-family="'Inter', sans-serif" font-weight="bold" font-size="20" fill="#60a5fa" text-anchor="middle">👤</text>
+    <text y="95" font-family="'Inter', sans-serif" font-weight="bold" font-size="14" fill="#60a5fa" text-anchor="middle">1. ROUTER AGENT</text>
+    <text y="115" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">CA Onboarding Profile</text>
+  </g>
+
+  <!-- 2. Vision Agent (Multimodal Ingestion) -->
+  <g transform="translate(600, 450)" filter="url(#glow-gold)">
+    <circle r="70" fill="url(#node-vision)" />
+    <circle r="25" fill="#1e293b" stroke="#fbbf24" stroke-width="2" />
+    <text y="7" font-family="'Inter', sans-serif" font-weight="bold" font-size="20" fill="#fbbf24" text-anchor="middle">👁️</text>
+    <text y="95" font-family="'Inter', sans-serif" font-weight="bold" font-size="14" fill="#fbbf24" text-anchor="middle">2. VISION AGENT</text>
+    <text y="115" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Multimodal Ingest &amp; OCR</text>
+  </g>
+
+  <!-- 3. Calculator Agent (Statutory Rules Engine) -->
+  <g transform="translate(950, 450)" filter="url(#glow-green)">
+    <circle r="70" fill="url(#node-calc)" />
+    <circle r="25" fill="#1e293b" stroke="#34d399" stroke-width="2" />
+    <text y="7" font-family="'Inter', sans-serif" font-weight="bold" font-size="20" fill="#34d399" text-anchor="middle">🧮</text>
+    <text y="95" font-family="'Inter', sans-serif" font-weight="bold" font-size="14" fill="#34d399" text-anchor="middle">3. CALCULATOR AGENT</text>
+    <text y="115" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Statutory Cap check &amp; Math</text>
+  </g>
+
+  <!-- Tech Badges Footer -->
+  <g transform="translate(80, 310)">
+    <!-- Badge 1 -->
+    <rect width="130" height="30" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-opacity="0.3" />
+    <text x="65" y="19" font-family="'Inter', sans-serif" font-weight="bold" font-size="12" fill="#38bdf8" text-anchor="middle">Gemini 2.0 Flash</text>
+    
+    <!-- Badge 2 -->
+    <rect x="145" width="130" height="30" rx="6" fill="#1e293b" stroke="#10b981" stroke-opacity="0.3" />
+    <text x="210" y="19" font-family="'Inter', sans-serif" font-weight="bold" font-size="12" fill="#10b981" text-anchor="middle">Streamlit App</text>
+    
+    <!-- Badge 3 -->
+    <rect x="290" width="130" height="30" rx="6" fill="#1e293b" stroke="#fbbf24" stroke-opacity="0.3" />
+    <text x="355" y="19" font-family="'Inter', sans-serif" font-weight="bold" font-size="12" fill="#fbbf24" text-anchor="middle">Docker &amp; Cloud Run</text>
+  </g>
+</svg>

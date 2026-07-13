@@ -143,17 +143,22 @@ st.markdown("""
         background-color: rgba(15, 23, 42, 0.6) !important;
     }
     
-    .stDownloadButton button {
+    .stDownloadButton button, .stDownloadButton a {
         background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%) !important;
         border-color: #1d4ed8 !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
         color: white !important;
         transition: all 0.2s ease !important;
+        display: block !important;
+        text-align: center !important;
+        text-decoration: none !important;
+        line-height: 1.5 !important;
     }
-    .stDownloadButton button:hover {
+    .stDownloadButton button:hover, .stDownloadButton a:hover {
         transform: scale(1.02) !important;
         box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
+        color: white !important;
     }
     
     /* Premium Tab Customizations */
@@ -176,6 +181,19 @@ st.markdown("""
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         color: #38bdf8 !important;
         font-weight: 700 !important;
+    }
+    
+    /* White-label styling: hide Streamlit deploy button, main menu, and footer */
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+    footer {
+        visibility: hidden !important;
+    }
+    
+    /* Hide the markdown header anchor link 🔗 icon on hover */
+    .anchor-link, a.anchor-link, [data-testid="stHeaderActionElements"] {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -607,16 +625,17 @@ with tab_report:
             except Exception as e:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
-        # Serve PDF via Streamlit's native static file serving (bypasses media manager and port issues)
+        # Serve PDF via direct static HTTP link for maximum Chrome/Edge compatibility (bypasses browser blob/sandbox blocks)
         pdf_filename = "Tax_Compliance_Report_FY2026.pdf"
         pdf_disk_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", pdf_filename)
         if os.path.exists(pdf_disk_path):
             pdf_url = f"/app/static/{pdf_filename}"
             st.markdown(
-                f'<a href="{pdf_url}" download="{pdf_filename}" target="_blank" '
+                f'<a href="{pdf_url}" download="{pdf_filename}" target="_self" '
                 f'style="display:block;text-decoration:none;background:linear-gradient(90deg,#2563eb,#1d4ed8);'
                 f'color:white;text-align:center;padding:12px 20px;border-radius:8px;font-weight:600;'
-                f'font-size:15px;font-family:sans-serif;box-shadow:0 4px 15px rgba(37,99,235,0.35);">'
+                f'font-size:15px;font-family:sans-serif;box-shadow:0 4px 15px rgba(37,99,235,0.35);'
+                f'transition:all 0.2s ease;line-height:1.5;">'
                 f'📥 Download Official Tax Compliance Report (PDF)</a>',
                 unsafe_allow_html=True
             )
