@@ -57,15 +57,26 @@ graph TD
   - Performs presumptive tax rules (50% flat income for professionals; 6% on digital turnover and 8% on cash turnover for small businesses).
   - Compiles a robust, audit-ready PDF/Markdown tax report detailing eligible Input Tax Credits (ITC) and net tax liabilities.
 
+### 🛠️ Gemini API Resilience & Fallback Engine
+- **Implementation**: [`agents/utils.py`](agents/utils.py)
+- **Role**: Prevents application crashes from free-tier rate limits or transient Google AI Studio outages.
+- **Details**:
+  - Automatically cascades API calls across fallback models: `gemini-2.5-flash-lite` ➔ `gemini-2.0-flash-lite` ➔ `gemini-2.0-flash` ➔ `gemini-3.5-flash`.
+  - Implements **exponential backoff retries** for temporary quota/network errors (`429` / `RESOURCE_EXHAUSTED` or `503` / `UNAVAILABLE`).
+
 ---
 
 ## 📂 Repository Structure
 
 ```
+├── .streamlit/
+│   └── config.toml           # Streamlit server config (static serving)
+│
 ├── agents/
 │   ├── calculator_agent.py   # Presumptive tax logic & report compiling
 │   ├── router_agent.py       # Onboarding conversation & profile extractor
-│   └── vision_agent.py       # Multimodal receipt/invoice parser
+│   ├── vision_agent.py       # Multimodal receipt/invoice parser
+│   └── utils.py              # Gemini fallback caller & PDF generator
 │
 ├── schemas/
 │   ├── models.py             # Pydantic v2 schemas for structured IO
@@ -80,6 +91,7 @@ graph TD
 ├── docs/
 │   └── workspace_setup.md    # IDE and developer setup guide
 │
+├── static/                   # Static resources directory
 ├── data/                     # Upload directory for tax invoices
 ├── reports/                  # Generated compliance outputs
 ├── app.py                    # Streamlit Web Interface (Premium UI)
@@ -118,9 +130,9 @@ GEMINI_API_KEY=your-gemini-api-key-here
 ### 3. Run the App
 Launch the Streamlit web interface:
 ```bash
-streamlit run app.py
+python -m streamlit run app.py --server.port=8080 --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
-Open your browser and navigate to `http://localhost:8501`.
+Open your browser and navigate to `http://127.0.0.1:8080`.
 
 ---
 
