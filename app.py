@@ -203,8 +203,14 @@ st.markdown("""
         z-index: 999999 !important;
     }
     
+    /* Hide Deploy button, Streamlit main menu, running spinner, and developer indicators */
+    .stDeployButton, .stAppDeployButton, #MainMenu, [data-testid="stHeaderActionElements"], [data-testid="stHeaderActionButton"], [data-testid="stMainMenu"], [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
     /* Hide the markdown header anchor link 🔗 icon on hover */
-    .anchor-link, a.anchor-link, [data-testid="stHeaderActionElements"] {
+    .anchor-link, a.anchor-link {
         display: none !important;
     }
 </style>
@@ -637,19 +643,14 @@ with tab_report:
             except Exception as e:
                 logger.exception("Failed to load PDF from disk: %s", str(e))
 
-        # Serve PDF via direct static HTTP link for maximum Chrome/Edge compatibility (bypasses browser blob/sandbox blocks)
-        pdf_filename = "Tax_Compliance_Report_FY2026.pdf"
-        pdf_disk_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", pdf_filename)
-        if os.path.exists(pdf_disk_path):
-            pdf_url = f"/app/static/{pdf_filename}"
-            st.markdown(
-                f'<a href="{pdf_url}" download="{pdf_filename}" target="_self" '
-                f'style="display:block;text-decoration:none;background:linear-gradient(90deg,#2563eb,#1d4ed8);'
-                f'color:white;text-align:center;padding:12px 20px;border-radius:8px;font-weight:600;'
-                f'font-size:15px;font-family:sans-serif;box-shadow:0 4px 15px rgba(37,99,235,0.35);'
-                f'transition:all 0.2s ease;line-height:1.5;">'
-                f'📥 Download Official Tax Compliance Report (PDF)</a>',
-                unsafe_allow_html=True
+        if pdf_bytes:
+            st.download_button(
+                label="📥 Download Official Tax Compliance Report (PDF)",
+                data=pdf_bytes,
+                file_name="Tax_Compliance_Report_FY2026.pdf",
+                mime="application/pdf",
+                key="pdf_download_btn",
+                use_container_width=True
             )
         else:
             st.info("Report file not found on disk. Please regenerate the report.")
