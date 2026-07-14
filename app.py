@@ -185,10 +185,22 @@ st.markdown("""
     
     /* White-label styling: hide Streamlit deploy button, main menu, and footer */
     [data-testid="stHeader"] {
-        display: none !important;
+        background-color: transparent !important;
     }
     footer {
         visibility: hidden !important;
+    }
+    
+    /* Make the sidebar collapse/expand toggle button visible and styled premium */
+    [data-testid="collapsedControl"] {
+        color: #38bdf8 !important;
+        background-color: rgba(30, 41, 59, 0.9) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        margin-left: 10px !important;
+        margin-top: 10px !important;
+        z-index: 999999 !important;
     }
     
     /* Hide the markdown header anchor link 🔗 icon on hover */
